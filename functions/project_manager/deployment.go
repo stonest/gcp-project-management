@@ -3,6 +3,7 @@ package deploymenthandler
 import (
 	"encoding/json"
 	"errors"
+	"log"
 	"net/http"
 
 	"google.golang.org/api/deploymentmanager/v2"
@@ -102,7 +103,7 @@ func (projectDeployment *ProjectDeployment) Insert(r *http.Request) (string, int
 	if err != nil {
 		return "Error deploying project " + projectDeployment.Name, http.StatusInternalServerError, err
 	}
-	return "Successfully Created " + projectDeployment.Name, http.StatusOK, nil
+	return "Successfully created " + projectDeployment.Name, http.StatusOK, nil
 }
 
 //Checks the operation deployment and returns the status of the deployment once the operation is complete.
@@ -120,5 +121,6 @@ func getDeploymentStatus(operation *deploymentmanager.Operation, r *http.Request
 		if err != nil {
 			return "", err
 		}
+		log.Println("Waiting for deployment to complete...")
 	}
 }
