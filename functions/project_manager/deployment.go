@@ -99,7 +99,7 @@ func (projectDeployment *ProjectDeployment) Insert(r *http.Request) (string, int
 	if err != nil {
 		return "Error creating deployment", http.StatusInternalServerError, err
 	}
-	_, err = getDeploymentStatus(resp, r)
+	err = getDeploymentStatus(resp, r)
 	if err != nil {
 		return "Error deploying project " + projectDeployment.Name, http.StatusInternalServerError, err
 	}
@@ -107,19 +107,19 @@ func (projectDeployment *ProjectDeployment) Insert(r *http.Request) (string, int
 }
 
 //Checks the operation deployment and returns the status of the deployment once the operation is complete.
-func getDeploymentStatus(operation *deploymentmanager.Operation, r *http.Request) (string, error) {
+func getDeploymentStatus(operation *deploymentmanager.Operation, r *http.Request) error {
 	getResponse := deploymentmanagerService.Operations.Get(projectID, operation.Name).Context(r.Context())
 	for {
 		resp, err := getResponse.Do()
 		if resp.Status == "DONE" {
 			if resp.Error != nil {
 				responseError, _ := resp.Error.MarshalJSON()
-				return "ERROR", errors.New(string(responseError))
+				return errors.New(string(responseError))
 			}
-			return resp.Status, nil
+			return nil
 		}
 		if err != nil {
-			return "", err
+			return err
 		}
 		log.Println("Waiting for deployment to complete...")
 	}
