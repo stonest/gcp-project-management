@@ -2,6 +2,8 @@ package deploymenthandler
 
 import (
 	"context"
+	"encoding/json"
+	"io/ioutil"
 	"log"
 	"net/http"
 
@@ -22,11 +24,11 @@ func init() {
 	}
 }
 
-// ManageDeployment: Creates, updates and deletes project deployments.
+// ManageDeployment Creates, updates and deletes project deployments.
 func ManageDeployment(w http.ResponseWriter, r *http.Request) {
 	log.Println(r.Method)
-	// newDeployment := ProjectDeployment{}
-	// data, _ := ioutil.ReadAll(r.Body)
-	// json.Unmarshal(data, &newDeployment)
-	// newDeployment.Insert()
+	newDeployment := ProjectDeployment{}
+	data, _ := ioutil.ReadAll(r.Body)
+	json.Unmarshal(data, &newDeployment)
+	newDeployment.Insert()
 }
