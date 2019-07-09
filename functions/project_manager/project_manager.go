@@ -1,17 +1,18 @@
-package main
+package deploymenthandler
 
 import (
 	"context"
 	"log"
-	"os"
+	"net/http"
 
 	"google.golang.org/api/deploymentmanager/v2"
 )
 
-var projectID = os.Getenv("GCP_PROJECT")
+var projectID = "org-dev"
 var deploymentmanagerService *deploymentmanager.Service
 var ctx context.Context
 
+// Set context and create a new deployment manager service that will perist between runs.
 func init() {
 	var err error
 	ctx = context.Background()
@@ -21,14 +22,11 @@ func init() {
 	}
 }
 
-func main() {
-
-	newDeployment := ProjectDeployment{
-		BillingAccount: "014289-16D89B-9466F5",
-		Name:           "proiecjts-sstone",
-		ParentID:       "283639071922",
-		ParentType:     "organization",
-	}
-
-	newDeployment.Insert(deploymentmanagerService)
+// manageDeployment: Creates, updates and deletes project deployments.
+func manageDeployment(w http.ResponseWriter, r *http.Request) {
+	log.Println(r.Method)
+	// newDeployment := ProjectDeployment{}
+	// data, _ := ioutil.ReadAll(r.Body)
+	// json.Unmarshal(data, &newDeployment)
+	// newDeployment.Insert()
 }
