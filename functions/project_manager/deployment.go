@@ -56,7 +56,7 @@ type Resources struct {
 }
 
 //Insert will Insert a new GCP deployment of a new project.
-func (projectDeployment *ProjectDeployment) Insert(w http.ResponseWriter, r *http.Request) (string, int, error) {
+func (projectDeployment *ProjectDeployment) Insert(r *http.Request) (string, int, error) {
 	resources := Resources{
 		Resources: []Resource{
 			Resource{
@@ -98,15 +98,15 @@ func (projectDeployment *ProjectDeployment) Insert(w http.ResponseWriter, r *htt
 	if err != nil {
 		return "Error creating deployment", http.StatusInternalServerError, err
 	}
-	_, err = getDeploymentStatus(resp, w, r)
+	_, err = getDeploymentStatus(resp, r)
 	if err != nil {
-		return "Error deploying project" + projectDeployment.Name, http.StatusInternalServerError, err
+		return "Error deploying project " + projectDeployment.Name, http.StatusInternalServerError, err
 	}
-	return "Successfully Created" + projectDeployment.Name, http.StatusOK, nil
+	return "Successfully Created " + projectDeployment.Name, http.StatusOK, nil
 }
 
 //Checks the operation deployment and returns the status of the deployment once the operation is complete.
-func getDeploymentStatus(operation *deploymentmanager.Operation, w http.ResponseWriter, r *http.Request) (string, error) {
+func getDeploymentStatus(operation *deploymentmanager.Operation, r *http.Request) (string, error) {
 	getResponse := deploymentmanagerService.Operations.Get(projectID, operation.Name).Context(r.Context())
 	for {
 		resp, err := getResponse.Do()

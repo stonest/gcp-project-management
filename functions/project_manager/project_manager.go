@@ -30,7 +30,7 @@ func ManageDeployment(w http.ResponseWriter, r *http.Request) {
 	newDeployment := ProjectDeployment{}
 	data, _ := ioutil.ReadAll(r.Body)
 	json.Unmarshal(data, &newDeployment)
-	response, status, err := newDeployment.Insert(w, r)
+	response, status, err := newDeployment.Insert(r)
 	if err != nil {
 		http.Error(w, response, status)
 		log.Print(err)
