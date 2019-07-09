@@ -3,7 +3,7 @@ package deploymenthandler
 import (
 	"encoding/json"
 	"errors"
-	"log"
+	"net/http"
 
 	"google.golang.org/api/deploymentmanager/v2"
 )
@@ -43,11 +43,11 @@ type Metadata struct {
 
 //ProjectDeployment contains information for inserting, patching and deleting deployments.
 type ProjectDeployment struct {
-	Name           string `json:"name"`           // Name: Name of the project requested for deployment.
-	BillingAccount string `json:"billingAccount"` // BillingAccount: The ID of the billing account to link the project to.
-	ParentID       string `json:"parentId"`       // ParentID: Parent container ID for the project.
-	ParentType     string `json:"parentType"`     // Type: Parent container type, valid values are organization or folder.
-	Owner          string `json:"owner"`          // Owner: Username that will own the project when complete.
+	Name           string `json:"name"`                     // Name: Name of the project requested for deployment.
+	BillingAccount string `json:"billingAccount,omitempty"` // BillingAccount: The ID of the billing account to link the project to.
+	ParentID       string `json:"parentId,omitempty"`       // ParentID: Parent container ID for the project.
+	ParentType     string `json:"parentType,omitempty"`     // Type: Parent container type, valid values are organization or folder.
+	Owner          string `json:"owner,omitempty"`          // Owner: Username that will own the project when complete.
 }
 
 //Resources is a container for n amount of Resource types.
@@ -56,7 +56,7 @@ type Resources struct {
 }
 
 //Insert will Insert a new GCP deployment of a new project.
-func (projectDeployment *ProjectDeployment) Insert() {
+func (projectDeployment *ProjectDeployment) Insert(w http.ResponseWriter, r *http.Request) (string, int, error) {
 	resources := Resources{
 		Resources: []Resource{
 			Resource{
@@ -94,20 +94,20 @@ func (projectDeployment *ProjectDeployment) Insert() {
 			},
 		},
 	}
-	resp, err := deploymentmanagerService.Deployments.Insert(projectID, &deployment).Context(ctx).Do()
+	resp, err := deploymentmanagerService.Deployments.Insert(projectID, &deployment).Context(r.Context()).Do()
 	if err != nil {
-		log.Fatal(err)
+		return "Error creating deployment", http.StatusInternalServerError, err
 	}
-	_, err = getDeploymentStatus(resp)
+	_, err = getDeploymentStatus(resp, w, r)
 	if err != nil {
-		log.Fatal(err)
+		return "Error deploying project" + projectDeployment.Name, http.StatusInternalServerError, err
 	}
-	log.Printf("%v Created", projectDeployment.Name)
+	return "Successfully Created" + projectDeployment.Name, http.StatusOK, nil
 }
 
 //Checks the operation deployment and returns the status of the deployment once the operation is complete.
-func getDeploymentStatus(operation *deploymentmanager.Operation) (string, error) {
-	getResponse := deploymentmanagerService.Operations.Get(projectID, operation.Name).Context(ctx)
+func getDeploymentStatus(operation *deploymentmanager.Operation, w http.ResponseWriter, r *http.Request) (string, error) {
+	getResponse := deploymentmanagerService.Operations.Get(projectID, operation.Name).Context(r.Context())
 	for {
 		resp, err := getResponse.Do()
 		if resp.Status == "DONE" {
@@ -115,10 +115,10 @@ func getDeploymentStatus(operation *deploymentmanager.Operation) (string, error)
 				responseError, _ := resp.Error.MarshalJSON()
 				return "ERROR", errors.New(string(responseError))
 			}
-			return resp.Status, err
+			return resp.Status, nil
 		}
 		if err != nil {
-			log.Fatal(err)
+			return "", err
 		}
 	}
 }

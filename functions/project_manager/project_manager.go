@@ -3,6 +3,7 @@ package deploymenthandler
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -12,13 +13,12 @@ import (
 
 var projectID = "org-dev"
 var deploymentmanagerService *deploymentmanager.Service
-var ctx context.Context
 
 // Set context and create a new deployment manager service that will perist between runs.
 func init() {
 	var err error
-	ctx = context.Background()
-	deploymentmanagerService, err = deploymentmanager.NewService(ctx)
+	// use context.Background() here to persist context between invocations.
+	deploymentmanagerService, err = deploymentmanager.NewService(context.Background())
 	if err != nil {
 		log.Fatalf("deploymentManager.NewService: %v", err)
 	}
@@ -30,5 +30,12 @@ func ManageDeployment(w http.ResponseWriter, r *http.Request) {
 	newDeployment := ProjectDeployment{}
 	data, _ := ioutil.ReadAll(r.Body)
 	json.Unmarshal(data, &newDeployment)
-	newDeployment.Insert()
+	response, status, err := newDeployment.Insert(w, r)
+	if err != nil {
+		http.Error(w, response, status)
+		log.Print(err)
+		return
+	}
+	fmt.Fprintf(w, response)
+	return
 }
