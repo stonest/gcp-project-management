@@ -7,11 +7,12 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"os"
 
 	"google.golang.org/api/deploymentmanager/v2"
 )
 
-var projectID = "org-dev"
+var projectID = os.Getenv("GCP_PROJECT")
 var deploymentmanagerService *deploymentmanager.Service
 
 // Set context and create a new deployment manager service that will perist between runs.
