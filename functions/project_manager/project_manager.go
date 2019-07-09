@@ -22,8 +22,8 @@ func init() {
 	}
 }
 
-// manageDeployment: Creates, updates and deletes project deployments.
-func manageDeployment(w http.ResponseWriter, r *http.Request) {
+// ManageDeployment: Creates, updates and deletes project deployments.
+func ManageDeployment(w http.ResponseWriter, r *http.Request) {
 	log.Println(r.Method)
 	// newDeployment := ProjectDeployment{}
 	// data, _ := ioutil.ReadAll(r.Body)
