@@ -23,8 +23,8 @@ type ProjectProperties struct {
 
 //BillingProperties provides information describing a billing account.
 type BillingProperties struct {
-	Name             string `json:"name"`             // Name: Name of the project to assign billing to.
-	BillingAccountID string `json:"billingAccountId"` // BillingAccountID: The name of the billing account as represented by its GUID. e.g. 014289-16D89B-9464F5.
+	Name             string `json:"name"`               // Name: Name of the project to assign billing to.
+	BillingAccountID string `json:"billingAccountName"` // BillingAccountID: The name of the billing account as represented by its GUID. e.g. 014289-16D89B-9464F5.
 }
 
 //Resource builds out a GCP resource.
