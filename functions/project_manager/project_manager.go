@@ -27,16 +27,22 @@ func init() {
 
 // ManageDeployment Creates, updates and deletes project deployments.
 func ManageDeployment(w http.ResponseWriter, r *http.Request) {
-	log.Println(r.Method)
+	var response string
+	var status int
+	var err error
+
 	newDeployment := ProjectDeployment{}
 	data, _ := ioutil.ReadAll(r.Body)
 	json.Unmarshal(data, &newDeployment)
-	response, status, err := newDeployment.Insert(r)
+
+	switch method := r.Method; method {
+	case "POST":
+		response, status, err = newDeployment.Insert(r.Context())
+	}
 	if err != nil {
 		http.Error(w, response, status)
 		log.Print(err)
 		return
 	}
 	fmt.Fprintf(w, response)
-	return
 }

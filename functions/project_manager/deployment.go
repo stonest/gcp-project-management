@@ -1,6 +1,7 @@
 package deploymenthandler
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"log"
@@ -57,7 +58,7 @@ type Resources struct {
 }
 
 //Insert will Insert a new GCP deployment of a new project.
-func (projectDeployment *ProjectDeployment) Insert(r *http.Request) (string, int, error) {
+func (projectDeployment *ProjectDeployment) Insert(ctx context.Context) (string, int, error) {
 	resources := Resources{
 		Resources: []Resource{
 			Resource{
@@ -95,11 +96,11 @@ func (projectDeployment *ProjectDeployment) Insert(r *http.Request) (string, int
 			},
 		},
 	}
-	resp, err := deploymentmanagerService.Deployments.Insert(projectID, &deployment).Context(r.Context()).Do()
+	resp, err := deploymentmanagerService.Deployments.Insert(projectID, &deployment).Context(ctx).Do()
 	if err != nil {
 		return "Error creating deployment", http.StatusInternalServerError, err
 	}
-	err = getDeploymentStatus(resp, r)
+	err = getDeploymentStatus(ctx, resp.Name)
 	if err != nil {
 		return "Error deploying project " + projectDeployment.Name, http.StatusInternalServerError, err
 	}
@@ -107,8 +108,8 @@ func (projectDeployment *ProjectDeployment) Insert(r *http.Request) (string, int
 }
 
 //Checks the operation deployment and returns the status of the deployment once the operation is complete.
-func getDeploymentStatus(operation *deploymentmanager.Operation, r *http.Request) error {
-	getResponse := deploymentmanagerService.Operations.Get(projectID, operation.Name).Context(r.Context())
+func getDeploymentStatus(ctx context.Context, operation string) error {
+	getResponse := deploymentmanagerService.Operations.Get(projectID, operation).Context(ctx)
 	for {
 		resp, err := getResponse.Do()
 		if resp.Status == "DONE" {
