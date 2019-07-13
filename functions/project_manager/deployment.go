@@ -3,9 +3,7 @@ package deploymenthandler
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"log"
-	"net/http"
 
 	"google.golang.org/api/deploymentmanager/v2"
 )
@@ -58,7 +56,7 @@ type Resources struct {
 }
 
 //Insert will Insert a new GCP deployment of a new project.
-func (projectDeployment *ProjectDeployment) Insert(ctx context.Context) (string, int, error) {
+func (projectDeployment *ProjectDeployment) Insert(ctx context.Context) *deploymentmanager.OperationError {
 	resources := Resources{
 		Resources: []Resource{
 			Resource{
@@ -98,29 +96,41 @@ func (projectDeployment *ProjectDeployment) Insert(ctx context.Context) (string,
 	}
 	resp, err := deploymentmanagerService.Deployments.Insert(projectID, &deployment).Context(ctx).Do()
 	if err != nil {
-		return "Error creating deployment", http.StatusInternalServerError, err
+		// TODO: Make a custom error rather than use OperationError type.
+		return &deploymentmanager.OperationError{
+			Errors: []*deploymentmanager.OperationErrorErrors{
+				&deploymentmanager.OperationErrorErrors{
+					Code:    "500",
+					Message: err.Error(),
+				},
+			}}
 	}
-	err = getDeploymentStatus(ctx, resp.Name)
-	if err != nil {
-		return "Error deploying project " + projectDeployment.Name, http.StatusInternalServerError, err
+	deploymentError := getDeploymentStatus(ctx, resp.Name)
+	if deploymentError != nil {
+		return deploymentError
 	}
-	return "Successfully created " + projectDeployment.Name, http.StatusOK, nil
+	return nil
 }
 
 //Checks the operation deployment and returns the status of the deployment once the operation is complete.
-func getDeploymentStatus(ctx context.Context, operation string) error {
+func getDeploymentStatus(ctx context.Context, operation string) *deploymentmanager.OperationError {
 	getResponse := deploymentmanagerService.Operations.Get(projectID, operation).Context(ctx)
 	for {
 		resp, err := getResponse.Do()
+		if err != nil {
+			return &deploymentmanager.OperationError{
+				Errors: []*deploymentmanager.OperationErrorErrors{
+					&deploymentmanager.OperationErrorErrors{
+						Code:    "500",
+						Message: err.Error(),
+					},
+				}}
+		}
 		if resp.Status == "DONE" {
 			if resp.Error != nil {
-				responseError, _ := resp.Error.MarshalJSON()
-				return errors.New(string(responseError))
+				return resp.Error
 			}
 			return nil
-		}
-		if err != nil {
-			return err
 		}
 		log.Println("Waiting for deployment to complete...")
 	}

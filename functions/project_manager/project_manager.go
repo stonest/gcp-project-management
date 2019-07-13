@@ -8,6 +8,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strconv"
 
 	"google.golang.org/api/deploymentmanager/v2"
 )
@@ -27,9 +28,8 @@ func init() {
 
 // ManageDeployment Creates, updates and deletes project deployments.
 func ManageDeployment(w http.ResponseWriter, r *http.Request) {
-	var response string
-	var status int
-	var err error
+	var deploymentErrorResponse *deploymentmanager.OperationError
+	var errorCode int
 
 	newDeployment := ProjectDeployment{}
 	data, _ := ioutil.ReadAll(r.Body)
@@ -37,12 +37,14 @@ func ManageDeployment(w http.ResponseWriter, r *http.Request) {
 
 	switch method := r.Method; method {
 	case "POST":
-		response, status, err = newDeployment.Insert(r.Context())
+		deploymentErrorResponse = newDeployment.Insert(r.Context())
 	}
-	if err != nil {
-		http.Error(w, response, status)
-		log.Print(err)
+	if deploymentErrorResponse != nil {
+		for _, deploymentError := range deploymentErrorResponse.Errors {
+			errorCode, _ = strconv.Atoi(deploymentError.Code)
+			http.Error(w, deploymentError.Message, errorCode)
+		}
 		return
 	}
-	fmt.Fprintf(w, response)
+	fmt.Fprintf(w, newDeployment.Name+" Successfully deployed")
 }
