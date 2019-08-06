@@ -55,8 +55,38 @@ type Resources struct {
 	Resources []Resource `json:"resources"` // Resources: Container for Resources to be deployed via Deployment Manager.
 }
 
+//APIError represents a formatted error returned from the GCP API
+type APIError struct {
+	Error   error // Error message received from API
+	Message string
+	Code    int
+}
+
+//Delete deletes a project.
+func (projectDeployment *ProjectDeployment) Delete(ctx context.Context) *APIError {
+	resp, err := deploymentmanagerService.Deployments.Delete(projectDeployment.Name, "deployment-"+projectDeployment.Name).Context(ctx).Do()
+	if err != nil {
+		// TODO: Make a custom error rather than use OperationError type.
+		return &APIError{
+			Error:   err,
+			Message: "Failed to delete deployment.",
+			Code:    500,
+		}
+	}
+	deploymentError := getDeploymentStatus(ctx, resp.Name)
+	if deploymentError != nil {
+		return deploymentError
+	}
+	return nil
+}
+
+//Patch updates a project with new parameters that are supplied through the cloud function. Note ProjectID cannot be changed. TODO check to see if projectID has changed.
+func (projectDeployment *ProjectDeployment) Patch(ctx context.Context) *APIError {
+	return nil
+}
+
 //Insert will Insert a new GCP deployment of a new project.
-func (projectDeployment *ProjectDeployment) Insert(ctx context.Context) *deploymentmanager.OperationError {
+func (projectDeployment *ProjectDeployment) Insert(ctx context.Context) *APIError {
 	resources := Resources{
 		Resources: []Resource{
 			Resource{
@@ -96,14 +126,11 @@ func (projectDeployment *ProjectDeployment) Insert(ctx context.Context) *deploym
 	}
 	resp, err := deploymentmanagerService.Deployments.Insert(projectID, &deployment).Context(ctx).Do()
 	if err != nil {
-		// TODO: Make a custom error rather than use OperationError type.
-		return &deploymentmanager.OperationError{
-			Errors: []*deploymentmanager.OperationErrorErrors{
-				&deploymentmanager.OperationErrorErrors{
-					Code:    "500",
-					Message: err.Error(),
-				},
-			}}
+		return &APIError{
+			Error:   err,
+			Message: "Failed to provision project.",
+			Code:    500,
+		}
 	}
 	deploymentError := getDeploymentStatus(ctx, resp.Name)
 	if deploymentError != nil {
@@ -113,22 +140,24 @@ func (projectDeployment *ProjectDeployment) Insert(ctx context.Context) *deploym
 }
 
 //Checks the operation deployment and returns the status of the deployment once the operation is complete.
-func getDeploymentStatus(ctx context.Context, operation string) *deploymentmanager.OperationError {
+func getDeploymentStatus(ctx context.Context, operation string) *APIError {
 	getResponse := deploymentmanagerService.Operations.Get(projectID, operation).Context(ctx)
 	for {
 		resp, err := getResponse.Do()
 		if err != nil {
-			return &deploymentmanager.OperationError{
-				Errors: []*deploymentmanager.OperationErrorErrors{
-					&deploymentmanager.OperationErrorErrors{
-						Code:    "500",
-						Message: err.Error(),
-					},
-				}}
+			return &APIError{
+				Error:   err,
+				Message: "Unable to retrieve deployment status",
+				Code:    500,
+			}
 		}
 		if resp.Status == "DONE" {
 			if resp.Error != nil {
-				return resp.Error
+				return &APIError{
+					Error:   err,
+					Message: "Deployment Failed",
+					Code:    500,
+				}
 			}
 			return nil
 		}
