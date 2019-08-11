@@ -66,7 +66,6 @@ type APIError struct {
 func (projectDeployment *ProjectDeployment) Delete(ctx context.Context) *APIError {
 	resp, err := deploymentmanagerService.Deployments.Delete(projectDeployment.Name, "deployment-"+projectDeployment.Name).Context(ctx).Do()
 	if err != nil {
-		// TODO: Make a custom error rather than use OperationError type.
 		return &APIError{
 			Error:   err,
 			Message: "Failed to delete deployment.",
@@ -89,7 +88,7 @@ func (projectDeployment *ProjectDeployment) Patch(ctx context.Context) *APIError
 func (projectDeployment *ProjectDeployment) Insert(ctx context.Context) *APIError {
 	resources := Resources{
 		Resources: []Resource{
-			Resource{
+			{
 				Name: "project_" + projectDeployment.Name,
 				Type: "cloudresourcemanager.v1.project",
 				Properties: ProjectProperties{
@@ -101,7 +100,7 @@ func (projectDeployment *ProjectDeployment) Insert(ctx context.Context) *APIErro
 					},
 				},
 			},
-			Resource{
+			{
 				Name: "billing_" + projectDeployment.Name,
 				Type: "deploymentmanager.v2.virtual.projectBillingInfo",
 				Properties: BillingProperties{
