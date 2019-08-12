@@ -15,7 +15,7 @@ func (fn deploymentHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 // ManageDeployment Creates, updates and deletes project deployments.
 func deployment(w http.ResponseWriter, r *http.Request) *APIError{
-	newDeployment := ProjectDeployment{}
+	newDeployment := ProjectInfo{}
 	data, _ := ioutil.ReadAll(r.Body)
 	_ = json.Unmarshal(data, &newDeployment)
 

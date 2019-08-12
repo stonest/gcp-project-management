@@ -3,6 +3,7 @@ package deploymenthandler
 import (
 	"context"
 	"encoding/json"
+	"google.golang.org/api/cloudresourcemanager/v1"
 	"log"
 
 	"google.golang.org/api/deploymentmanager/v2"
@@ -42,7 +43,7 @@ type Metadata struct {
 }
 
 //ProjectDeployment contains information for inserting, patching and deleting deployments.
-type ProjectDeployment struct {
+type ProjectInfo struct {
 	Name           string `json:"name"`                     // Name: Name of the project requested for deployment.
 	BillingAccount string `json:"billingAccount,omitempty"` // BillingAccount: The ID of the billing account to link the project to.
 	ParentID       string `json:"parentId,omitempty"`       // ParentID: Parent container ID for the project.
@@ -61,9 +62,8 @@ type APIError struct {
 	Message string
 	Code    int
 }
-
 //Delete deletes a project.
-func (projectDeployment *ProjectDeployment) Delete(ctx context.Context) *APIError {
+func (projectDeployment *ProjectInfo) Delete(ctx context.Context) *APIError {
 	resp, err := deploymentmanagerService.Deployments.Delete(projectDeployment.Name, "deployment-"+projectDeployment.Name).Context(ctx).Do()
 	if err != nil {
 		return &APIError{
@@ -79,13 +79,13 @@ func (projectDeployment *ProjectDeployment) Delete(ctx context.Context) *APIErro
 	return nil
 }
 
-//Patch updates a project with new parameters that are supplied through the cloud function. Note ProjectID cannot be changed. TODO check to see if projectID has changed.
-func (projectDeployment *ProjectDeployment) Patch(ctx context.Context) *APIError {
+// Only allow the expiry date to be amended. yet tp be implemented.
+func (projectDeployment *ProjectInfo) Patch(ctx context.Context) *APIError {
 	return nil
 }
 
 //Insert will Insert a new GCP deployment of a new project.
-func (projectDeployment *ProjectDeployment) Insert(ctx context.Context) *APIError {
+func (projectDeployment *ProjectInfo) Insert(ctx context.Context) *APIError {
 	resources := Resources{
 		Resources: []Resource{
 			{
@@ -136,6 +136,27 @@ func (projectDeployment *ProjectDeployment) Insert(ctx context.Context) *APIErro
 		return deploymentError
 	}
 	return nil
+}
+
+//Lists the Liens of the given project. A project cannot be deleted whilst it has at least one Lien active on it
+//So we must gather a list of Liens to delete from the project. As the intention is to have an ephemeral poroject, no
+//Lien should be active.
+func getProjectLiens(ctx context.Context, project string) ([]cloudresourcemanager.Lien, *APIError) {
+	var liens []cloudresourcemanager.Lien
+	req := cloudresourcemanagerService.Liens.List().Parent(project)
+	if err := req.Pages(ctx, func(page *cloudresourcemanager.ListLiensResponse) error {
+		for _, lien := range page.Liens {
+			liens = append(liens, *lien)
+		}
+		return nil
+	}); err != nil {
+		return nil, &APIError{
+			Error:   err,
+			Message: "Could not retrieve project Liens",
+			Code:    500,
+		}
+	}
+	return liens, nil
 }
 
 //Checks the operation deployment and returns the status of the deployment once the operation is complete.
