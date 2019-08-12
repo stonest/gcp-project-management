@@ -1,4 +1,4 @@
-package deploymenthandler
+package main
 
 import (
 	"context"
@@ -9,7 +9,7 @@ import (
 	"google.golang.org/api/deploymentmanager/v2"
 )
 
-//Parent details the parent container propeties for a project.
+//Parent details the parent container properties for a project
 type Parent struct {
 	Type string `json:"type"` // Type: Parent container type, valid values are organization or folder.
 	ID   string `json:"id"`   // ID: The ID of the container.
@@ -62,6 +62,7 @@ type APIError struct {
 	Message string
 	Code    int
 }
+
 //Delete deletes a project.
 func (projectDeployment *ProjectInfo) Delete(ctx context.Context) *APIError {
 	resp, err := deploymentmanagerService.Deployments.Delete(projectDeployment.Name, "deployment-"+projectDeployment.Name).Context(ctx).Do()
@@ -139,7 +140,7 @@ func (projectDeployment *ProjectInfo) Insert(ctx context.Context) *APIError {
 }
 
 //Lists the Liens of the given project. A project cannot be deleted whilst it has at least one Lien active on it
-//So we must gather a list of Liens to delete from the project. As the intention is to have an ephemeral poroject, no
+//So we must gather a list of Liens to delete from the project. As the intention is to have an ephemeral project, no
 //Lien should be active.
 func getProjectLiens(ctx context.Context, project string) ([]cloudresourcemanager.Lien, *APIError) {
 	var liens []cloudresourcemanager.Lien

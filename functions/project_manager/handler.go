@@ -1,4 +1,4 @@
-package deploymenthandler
+package main
 
 import (
 	"encoding/json"
@@ -6,15 +6,16 @@ import (
 	"net/http"
 )
 
-type deploymentHandler func(http.ResponseWriter, *http.Request) *APIError
+type deploymentHandler func(*http.Request) *APIError
 
 func (fn deploymentHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	if err := fn(w,r); err != nil {
+	if err := fn(r); err != nil {
 		http.Error(w, err.Message, err.Code)
 	}
 }
+
 // ManageDeployment Creates, updates and deletes project deployments.
-func deployment(w http.ResponseWriter, r *http.Request) *APIError{
+func deployment(r *http.Request) *APIError {
 	newDeployment := ProjectInfo{}
 	data, _ := ioutil.ReadAll(r.Body)
 	_ = json.Unmarshal(data, &newDeployment)

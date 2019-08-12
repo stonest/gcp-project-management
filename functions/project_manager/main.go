@@ -1,4 +1,4 @@
-package deploymenthandler
+package main
 
 import (
 	"context"
@@ -7,14 +7,13 @@ import (
 	"net/http"
 	"os"
 
-	"google.golang.org/api/deploymentmanager/v2"
 	"google.golang.org/api/cloudresourcemanager/v1"
+	"google.golang.org/api/deploymentmanager/v2"
 )
 
 var projectID = os.Getenv("GCP_PROJECT")
 var deploymentmanagerService *deploymentmanager.Service
 var cloudresourcemanagerService *cloudresourcemanager.Service
-
 
 // Set context and create a new deployment manager service that will persist between runs.
 func init() {
