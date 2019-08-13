@@ -65,6 +65,16 @@ type APIError struct {
 
 //Delete deletes a project.
 func (projectDeployment *ProjectInfo) Delete(ctx context.Context) *APIError {
+
+	liensList, liensListError := getProjectLiens(ctx, projectDeployment.Name)
+	if liensListError != nil {
+		return liensListError
+	}
+	liensDeleteError := deleteProjectLiens(ctx, liensList)
+	if liensDeleteError != nil {
+		return liensDeleteError
+	}
+
 	resp, err := deploymentmanagerService.Deployments.Delete(projectDeployment.Name, "deployment-"+projectDeployment.Name).Context(ctx).Do()
 	if err != nil {
 		return &APIError{
@@ -88,7 +98,7 @@ func (projectDeployment *ProjectInfo) Patch(ctx context.Context) *APIError {
 //Insert will Insert a new GCP deployment of a new project.
 func (projectDeployment *ProjectInfo) Insert(ctx context.Context) *APIError {
 	resources := Resources{
-		Resources: []Resource{
+		[]Resource{
 			{
 				Name: "project_" + projectDeployment.Name,
 				Type: "cloudresourcemanager.v1.project",
@@ -144,7 +154,7 @@ func (projectDeployment *ProjectInfo) Insert(ctx context.Context) *APIError {
 //Lien should be active.
 func getProjectLiens(ctx context.Context, project string) ([]cloudresourcemanager.Lien, *APIError) {
 	var liens []cloudresourcemanager.Lien
-	req := cloudresourcemanagerService.Liens.List().Parent(project)
+	req := cloudresourcemanagerService.Liens.List().Parent("projects/" + project)
 	if err := req.Pages(ctx, func(page *cloudresourcemanager.ListLiensResponse) error {
 		for _, lien := range page.Liens {
 			liens = append(liens, *lien)
@@ -158,6 +168,20 @@ func getProjectLiens(ctx context.Context, project string) ([]cloudresourcemanage
 		}
 	}
 	return liens, nil
+}
+
+func deleteProjectLiens(ctx context.Context, liens []cloudresourcemanager.Lien) *APIError {
+	for _, lien := range liens {
+		_, err := cloudresourcemanagerService.Liens.Delete(lien.Name).Context(ctx).Do()
+		if err != nil {
+			return &APIError{
+				Error:   err,
+				Message: "Could not delete lien from project",
+				Code:    500,
+			}
+		}
+	}
+	return nil
 }
 
 //Checks the operation deployment and returns the status of the deployment once the operation is complete.
