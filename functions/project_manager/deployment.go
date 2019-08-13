@@ -98,7 +98,7 @@ func (projectDeployment *ProjectInfo) Patch(ctx context.Context) *APIError {
 //Insert will Insert a new GCP deployment of a new project.
 func (projectDeployment *ProjectInfo) Insert(ctx context.Context) *APIError {
 	resources := Resources{
-		[]Resource{
+		Resources: []Resource{
 			{
 				Name: "project_" + projectDeployment.Name,
 				Type: "cloudresourcemanager.v1.project",
