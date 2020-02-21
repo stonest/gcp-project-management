@@ -18,26 +18,13 @@ var cloudresourcemanagerService *cloudresourcemanager.Service
 // Set context and create a new deployment manager service that will persist between runs.
 func init() {
 	var err error
-
-	apiKey, set := os.LookupEnv("API_KEY")
-	if set != false {
-		deploymentmanagerService, err = deploymentmanager.NewService(context.Background(), option.WithAPIKey(apiKey))
-		if err != nil {
-			log.Fatalf("deploymentManager.NewService: %v", err)
-		}
-		cloudresourcemanagerService, err = cloudresourcemanager.NewService(context.Background(), option.WithAPIKey(apiKey))
-		if err != nil {
-			log.Fatalf("cloudresourcemanagerService.NewService: %v", err)
-		}
-	} else {
-		deploymentmanagerService, err = deploymentmanager.NewService(context.Background())
-		if err != nil {
-			log.Fatalf("deploymentManager.NewService: %v", err)
-		}
-		cloudresourcemanagerService, err = cloudresourcemanager.NewService(context.Background())
-		if err != nil {
-			log.Fatalf("cloudresourcemanagerService.NewService: %v", err)
-		}
+	deploymentmanagerService, err = deploymentmanager.NewService(context.Background())
+	if err != nil {
+		log.Fatalf("deploymentManager.NewService: %v", err)
+	}
+	cloudresourcemanagerService, err = cloudresourcemanager.NewService(context.Background())
+	if err != nil {
+		log.Fatalf("cloudresourcemanagerService.NewService: %v", err)
 	}
 }
 

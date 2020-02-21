@@ -176,7 +176,7 @@ func deleteProjectLiens(ctx context.Context, liens []cloudresourcemanager.Lien) 
 		if err != nil {
 			return &APIError{
 				Error:   err,
-				Message: "Could not delete lien from project",
+				Message: "Could not delete liens from project",
 				Code:    500,
 			}
 		}
