@@ -3,8 +3,9 @@ package main
 import (
 	"context"
 	"encoding/json"
-	"google.golang.org/api/cloudresourcemanager/v1"
 	"log"
+
+	"google.golang.org/api/cloudresourcemanager/v1"
 
 	"google.golang.org/api/deploymentmanager/v2"
 )
@@ -42,7 +43,7 @@ type Metadata struct {
 	RuntimePolicy []string `json:"runtimePolicy,omitempty"` // RuntimePolicy: whatever google says it is.
 }
 
-//ProjectDeployment contains information for inserting, patching and deleting deployments.
+//ProjectInfo contains information for inserting, patching and deleting deployments.
 type ProjectInfo struct {
 	Name           string `json:"name"`                     // Name: Name of the project requested for deployment.
 	BillingAccount string `json:"billingAccount,omitempty"` // BillingAccount: The ID of the billing account to link the project to.
@@ -90,7 +91,7 @@ func (projectDeployment *ProjectInfo) Delete(ctx context.Context) *APIError {
 	return nil
 }
 
-// Only allow the expiry date to be amended. yet tp be implemented.
+// Patch - Only allow the expiry date to be amended. yet tp be implemented.
 func (projectDeployment *ProjectInfo) Patch(ctx context.Context) *APIError {
 	return nil
 }
