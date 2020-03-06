@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"io/ioutil"
+	"log"
 	"net/http"
 )
 
@@ -10,6 +11,7 @@ type deploymentHandler func(*http.Request) *APIError
 
 func (fn deploymentHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if err := fn(r); err != nil {
+		log.Print(err.Message)
 		http.Error(w, err.Message, err.Code)
 	}
 }

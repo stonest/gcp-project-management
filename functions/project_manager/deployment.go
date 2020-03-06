@@ -138,7 +138,7 @@ func (projectDeployment *ProjectInfo) Insert(ctx context.Context) *APIError {
 	if err != nil {
 		return &APIError{
 			Error:   err,
-			Message: "Failed to provision project.",
+			Message: "Failed to create deployment",
 			Code:    500,
 		}
 	}
@@ -146,6 +146,7 @@ func (projectDeployment *ProjectInfo) Insert(ctx context.Context) *APIError {
 	if deploymentError != nil {
 		return deploymentError
 	}
+	log.Println("Successfully created project")
 	return nil
 }
 
@@ -167,6 +168,7 @@ func getProjectLiens(ctx context.Context, project string) ([]cloudresourcemanage
 			Code:    500,
 		}
 	}
+	log.Println("Retrieved project liens")
 	return liens, nil
 }
 
@@ -180,6 +182,7 @@ func deleteProjectLiens(ctx context.Context, liens []cloudresourcemanager.Lien) 
 				Code:    500,
 			}
 		}
+		log.Println("Liens deleted.")
 	}
 	return nil
 }
@@ -204,6 +207,7 @@ func getDeploymentStatus(ctx context.Context, operation string) *APIError {
 					Code:    500,
 				}
 			}
+			log.Println("Deployment Complete")
 			return nil
 		}
 		log.Println("Waiting for deployment to complete...")

@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"google.golang.org/api/option"
 	"log"
 	"net/http"
 	"os"
